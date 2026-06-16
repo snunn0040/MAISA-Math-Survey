@@ -21,29 +21,28 @@ library(patchwork)
 
 # ---- Item dictionary: raw item -> construct -> short label -> reverse flag ----
 # Edit the labels/constructs here; everything downstream is driven off this table.
+# Constructs reflect the 3-factor CFA solution (see cfa_3factor.R).
 items <- tribble(
   ~item,           ~construct,                   ~label,                        ~reverse,
-  "enjoy",         "Attitudes & engagement",     "Enjoy math this year",         FALSE,
-  "interesting",   "Attitudes & engagement",     "Find it interesting",          FALSE,
-  "important",     "Attitudes & engagement",     "Important to everyday life",   FALSE,
-  "math_person",   "Identity & confidence",      "See myself as a math person",  FALSE,
-  "can_solve",     "Identity & confidence",      "Can solve math problems",      FALSE,
-  "belonging",     "Belonging & safety",         "Sense of belonging",           FALSE,
-  "valued",        "Belonging & safety",         "Feel like a valued member",    FALSE,
-  "many_ways",     "Belonging & safety",         "We value many ways",           FALSE,
-  "mistakes",      "Belonging & safety",         "Mistakes help learning",       FALSE,
-  "comfortable",   "Belonging & safety",         "Comfortable sharing ideas",    FALSE,
-  "explain",       "Discourse & participation",  "Asked to explain thinking",    FALSE,
-  "classmates",    "Discourse & participation",  "Classmates have good ideas",   FALSE,
-  "teacher_talks", "Discourse & participation",  "Teacher does most talking",    TRUE
+  "enjoy",         "Interest & self-efficacy",   "Enjoy math this year",         FALSE,
+  "interesting",   "Interest & self-efficacy",   "Find it interesting",          FALSE,
+  "important",     "Interest & self-efficacy",   "Important to everyday life",   FALSE,
+  "math_person",   "Interest & self-efficacy",   "See myself as a math person",  FALSE,
+  "can_solve",     "Interest & self-efficacy",   "Can solve math problems",      FALSE,
+  "belonging",     "Belonging",                  "Sense of belonging",           FALSE,
+  "valued",        "Belonging",                  "Feel like a valued member",    FALSE,
+  "comfortable",   "Belonging",                  "Comfortable sharing ideas",    FALSE,
+  "many_ways",     "Classroom culture",          "We value many ways",           FALSE,
+  "mistakes",      "Classroom culture",          "Mistakes help learning",       FALSE,
+  "explain",       "Classroom culture",          "Asked to explain thinking",    FALSE,
+  "classmates",    "Classroom culture",          "Classmates have good ideas",   FALSE,
+  "teacher_talks", "Classroom culture",          "Teacher does most talking",    TRUE
 )
 
-construct_levels <- c("Attitudes & engagement", "Identity & confidence",
-                      "Belonging & safety", "Discourse & participation")
-construct_cols <- c("Attitudes & engagement"    = "#1D9E75",
-                    "Identity & confidence"     = "#534AB7",
-                    "Belonging & safety"        = "#D85A30",
-                    "Discourse & participation" = "#378ADD")
+construct_levels <- c("Interest & self-efficacy", "Belonging", "Classroom culture")
+construct_cols <- c("Interest & self-efficacy" = "#1D9E75",
+                    "Belonging"                = "#D85A30",
+                    "Classroom culture"        = "#378ADD")
 
 # ---- Load the cleaned, tidy responses (produced by prep_data.R) ----
 # Long format, columns: school, student_id, item, response (1-5).
@@ -116,10 +115,13 @@ plot_tiles <- function(t) {
 #| fig-height: 9.4
 panels <- imap(construct_cols, ~plot_construct(agree, .y, .x))
 
+# Stack the three constructs vertically; panel heights track item counts
+# (Interest & self-efficacy = 5, Belonging = 3, Classroom culture = 5).
 layout <- plot_tiles(tiles) /
-  ((panels[[1]] | panels[[2]]) /
-   (panels[[3]] | panels[[4]])) +
-  plot_layout(heights = c(0.8, 5))
+  panels[["Interest & self-efficacy"]] /
+  panels[["Belonging"]] /
+  panels[["Classroom culture"]] +
+  plot_layout(heights = c(0.8, 5, 3, 5))
 
 layout + plot_annotation(
   title    = paste0(params$school, " \u2014 student math perceptions, spring 2026"),
