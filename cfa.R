@@ -46,7 +46,7 @@ wide <- wide |> mutate(across(all_of(item_cols), ordered))
 cfa_model <- '
   attitudes =~ enjoy + interesting + important
   identity  =~ math_person + can_solve
-  belonging =~ belonging + valued + many_ways + mistakes + comfortable
+  belong    =~ belonging + valued + many_ways + mistakes + comfortable
   discourse =~ explain + classmates + teacher_talks
 '
 
