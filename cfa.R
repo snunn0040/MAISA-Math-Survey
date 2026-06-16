@@ -4,7 +4,9 @@ library(lavaan)
 # ============================================================
 # cfa.R
 # Confirmatory factor analysis of the math-perceptions survey.
-# 5 factors, 13 items, all schools pooled.
+# 4 factors, 13 items, all schools pooled.
+# Factor structure = the original construct grouping documented in
+# math_onepager.qmd / prep_data.R comments.
 # Reads the tidy long file written by prep_data.R (responses.csv).
 # ============================================================
 
@@ -37,20 +39,15 @@ stopifnot(all(item_cols %in% names(wide)))
 # default for ordered data in lavaan.
 wide <- wide |> mutate(across(all_of(item_cols), ordered))
 
-# --- 4. Specify the 5-factor measurement model -------------
-# NOTE: `relevance` has a single indicator (`important`). A 1-item
-# latent factor is not identified as a measurement model, so its
-# residual variance is fixed to 0 below -> the factor is, by
-# construction, identical to the item. Interpret accordingly.
+# --- 4. Specify the 4-factor measurement model -------------
+# Original construct grouping (math_onepager.qmd). Every factor has
+# >= 2 indicators, so there is no single-indicator identification
+# problem; `important` lives with the attitudes items here.
 cfa_model <- '
-  interest  =~ enjoy + interesting
+  attitudes =~ enjoy + interesting + important
   identity  =~ math_person + can_solve
-  relevance =~ important
-  belonging =~ belonging + valued + comfortable
-  culture   =~ many_ways + mistakes + explain + classmates + teacher_talks
-
-  # single-indicator factor: fix its measurement-error variance to 0
-  important ~~ 0*important
+  belonging =~ belonging + valued + many_ways + mistakes + comfortable
+  discourse =~ explain + classmates + teacher_talks
 '
 
 # --- 5. Fit -------------------------------------------------
