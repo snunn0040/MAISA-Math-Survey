@@ -71,74 +71,75 @@ agree <- school_data |>
   left_join(items, by = "item") |>
   mutate(
     suppressed = n < params$min_n,
-    pct_plot   = ifelse(suppressed, 0, pct_agree),
-    pct_label  = ifelse(suppressed, "n too small", paste0(round(pct_agree), "%")),
-    label      = ifelse(reverse, paste0(label, " *"), label),
+    # direction-corrected: flip reverse-coded items so that, for every
+    # item, a higher % means "more student-centered / more positive".
+    # (4-point scale has no neutral midpoint, so the flip is 100 - pct.)
+    dir_pct    = ifelse(reverse, 100 - pct_agree, pct_agree),
     construct  = factor(construct, levels = construct_levels)
   )
 
-tiles <- agree |>
+# ---- One aggregate % per factor: mean of the (direction-corrected) item
+# %-agree across that factor's non-suppressed items ----
+construct_pct <- agree |>
   filter(!suppressed) |>
   group_by(construct) |>
-  summarise(pct = round(mean(pct_agree)), .groups = "drop") |>
-  complete(construct = factor(construct_levels, levels = construct_levels)) |>
-  mutate(pct_label = ifelse(is.na(pct), "—", paste0(pct, "%")))
+  summarise(pct = round(mean(dir_pct)), .groups = "drop") |>
+  complete(construct = factor(construct_levels, levels = construct_levels))
+pct_lookup <- setNames(construct_pct$pct, as.character(construct_pct$construct))
 ```
 
 ```{r}
 #| label: plot-functions
-plot_construct <- function(df, construct_name, fill_col) {
-  d <- df |>
-    filter(construct == construct_name) |>
-    mutate(label = fct_reorder(label, pct_agree))
-  ggplot(d, aes(pct_plot, label)) +
-    geom_col(fill = fill_col, width = 0.62) +
-    geom_text(aes(label = pct_label), hjust = -0.08, size = 3, colour = "grey25") +
-    scale_x_continuous(limits = c(0, 118), expand = expansion(0)) +
-    labs(title = construct_name, x = NULL, y = NULL) +
-    theme_minimal(base_size = 11) +
-    theme(
-      panel.grid  = element_blank(),
-      axis.text.x = element_blank(),
-      axis.text.y = element_text(size = 9, colour = "grey20"),
-      plot.title  = element_text(face = "bold", size = 11.5),
-      plot.margin = margin(4, 8, 4, 4)
-    )
-}
+# One pie per factor: the colored slice is the aggregate % agree, the
+# grey slice is the remainder. The % is printed big in the center
+# (donut-style) so it stays legible regardless of slice size.
+plot_pie <- function(construct_name, pct, fill_col) {
+  base <- theme_void(base_size = 11) +
+    theme(plot.title  = element_text(face = "bold", size = 11.5, hjust = 0.5),
+          plot.margin = margin(6, 6, 6, 6))
 
-plot_tiles <- function(t) {
-  t <- t |> mutate(construct = factor(construct, levels = construct_levels))
-  ggplot(t, aes(1, 1)) +
-    geom_text(aes(label = pct_label), size = 9, fontface = "bold", colour = "grey15") +
-    facet_wrap(~construct, nrow = 1) +
-    theme_void(base_size = 11) +
-    theme(
-      strip.text   = element_text(size = 9.5, face = "bold", colour = "grey30"),
-      panel.spacing = unit(1.2, "lines")
+  # All items in this factor were suppressed -> no number to show.
+  if (is.na(pct)) {
+    return(
+      ggplot() +
+        annotate("text", x = 0, y = 0, label = "n too small",
+                 size = 4, colour = "grey55") +
+        labs(title = construct_name) + base
     )
+  }
+
+  d <- tibble(part  = factor(c("agree", "rest"), levels = c("agree", "rest")),
+              value = c(pct, 100 - pct))
+  ggplot(d, aes(x = 2, y = value, fill = part)) +
+    geom_col(width = 1, colour = "white") +
+    coord_polar(theta = "y", start = 0) +
+    xlim(0.5, 2.5) +
+    scale_fill_manual(values = c(agree = fill_col, rest = "grey88"),
+                      guide = "none") +
+    annotate("text", x = 0.5, y = 0, label = paste0(pct, "%"),
+             size = 8, fontface = "bold", colour = "grey15") +
+    labs(title = construct_name) + base
 }
 ```
 
 ```{r}
 #| label: fig-onepager
 #| fig-width: 7.4
-#| fig-height: 9.4
-panels <- imap(construct_cols, ~plot_construct(agree, .y, .x))
+#| fig-height: 3.6
+# One pie per factor, side by side.
+pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 
-# Stack the three constructs vertically; panel heights track item counts
-# (Interest & self-efficacy = 5, Belonging = 3, Classroom culture = 5).
-layout <- plot_tiles(tiles) /
-  panels[["Interest & self-efficacy"]] /
-  panels[["Belonging"]] /
-  panels[["Classroom culture"]] +
-  plot_layout(heights = c(0.8, 5, 3, 5))
+layout <- pies[["Interest & self-efficacy"]] |
+  pies[["Belonging"]] |
+  pies[["Classroom culture"]]
 
 layout + plot_annotation(
   title    = paste0(params$school, " \u2014 student math perceptions, spring 2026"),
   subtitle = paste0("n = ", n_students,
-                    " students  \u00b7  bars show % who agree or strongly agree (top-2-box)",
-                    "  \u00b7  * reverse-coded: high agreement is the less student-centered direction"),
-  caption  = "Items with fewer than the minimum responses are suppressed.",
+                    " students  \u00b7  each circle = average % who agree or strongly agree",
+                    " (top-2-box) across the factor's items",
+                    "  \u00b7  reverse-coded items flipped so higher = more student-centered"),
+  caption  = "Items with fewer than the minimum responses are excluded from their factor's average.",
   theme = theme(
     plot.title    = element_text(face = "bold", size = 14),
     plot.subtitle = element_text(size = 9, colour = "grey35"),
