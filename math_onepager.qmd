@@ -52,6 +52,15 @@ responses <- readr::read_csv("responses.csv", show_col_types = FALSE)
 school_data <- responses |> filter(school == params$school)
 n_students  <- n_distinct(school_data$student_id)
 
+# Distinct specialists serving this school (specialist is a student-level
+# attribute carried through from prep_data.R). Degrades gracefully if the
+# column isn't present yet.
+n_specialists <- if ("specialist" %in% names(school_data)) {
+  n_distinct(school_data$specialist[!is.na(school_data$specialist)])
+} else {
+  NA_integer_
+}
+
 # Fail clearly if the school filter matched nothing, instead of erroring
 # deep in the plotting code. Usually means params$school doesn't match a
 # value in responses.csv (render via render_all.R, which pulls the school
@@ -147,3 +156,16 @@ layout + plot_annotation(
   )
 )
 ```
+
+## Summary
+
+**SUMMARY GOES HERE** *(to be written by the team)*
+
+------------------------------------------------------------------------
+
+**About this survey.** A survey of 4th- and 5th-grade students' perceptions
+of mathematics, conducted in spring 2026. This page reflects
+**`r n_students`** student responses and
+**`r ifelse(is.na(n_specialists), "n/a", n_specialists)`** specialist`r if (!is.na(n_specialists) && n_specialists == 1) "" else "s"`
+at *`r params$school`*.
+

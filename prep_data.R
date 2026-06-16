@@ -50,7 +50,10 @@ responses <- raw |>
   mutate(school_code = str_trim(as.character(school_code))) |>
   left_join(school_lookup, by = "school_code") |>
   rename(school = school_name) |>
-  select(student_id, school, all_of(names(item_map))) |>
+  # `specialist` is a student-level attribute carried through to the report
+  # (used for the per-school specialist count). If your raw export names it
+  # something else, rename it to `specialist` above this select().
+  select(student_id, school, specialist, all_of(names(item_map))) |>
   pivot_longer(all_of(names(item_map)),
                names_to = "qcol", values_to = "response") |>
   mutate(
@@ -61,7 +64,7 @@ responses <- raw |>
       as.integer(response)
     }
   ) |>
-  select(school, student_id, item, response)
+  select(school, student_id, specialist, item, response)
 
 # --- 6. Quick sanity checks (printed to console) -----------
 unmapped <- responses |> filter(is.na(response))
