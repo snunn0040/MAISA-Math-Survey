@@ -52,6 +52,16 @@ responses <- readr::read_csv("responses.csv", show_col_types = FALSE)
 school_data <- responses |> filter(school == params$school)
 n_students  <- n_distinct(school_data$student_id)
 
+# Fail clearly if the school filter matched nothing, instead of erroring
+# deep in the plotting code. Usually means params$school doesn't match a
+# value in responses.csv (render via render_all.R, which pulls the school
+# names straight from the data), or the school column is blank/NA upstream.
+if (nrow(school_data) == 0) {
+  stop("No responses for school = '", params$school, "'. ",
+       "Available schools: ",
+       paste(sort(unique(responses$school)), collapse = ", "))
+}
+
 # ---- % agree (top-2-box) per item, with small-cell suppression ----
 agree <- school_data |>
   group_by(item) |>
