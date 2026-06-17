@@ -36,9 +36,9 @@ brand <- list(
 )
 
 # 2) One color per factor (the filled part of each donut).
-construct_cols <- c("Interest & self-efficacy" = "#1F4E79",
+construct_cols <- c("Attitudes" = "#1F4E79",
                     "Belonging"                = "#2E9E8F",
-                    "Classroom culture"        = "#E08A1E")
+                    "Classroom Culture"        = "#E08A1E")
 
 # 3) Logos: drop files in ./logos/ (PNG or SVG). Missing files are
 #    skipped automatically, so the page still renders without them.
@@ -67,22 +67,22 @@ emit_logo <- function(path, height = "1.0cm") {
 # Constructs reflect the 3-factor CFA solution (see cfa_3factor.R).
 items <- tribble(
   ~item,           ~construct,                   ~label,                        ~reverse,
-  "enjoy",         "Interest & self-efficacy",   "Enjoy math this year",         FALSE,
-  "interesting",   "Interest & self-efficacy",   "Find it interesting",          FALSE,
-  "important",     "Interest & self-efficacy",   "Important to everyday life",   FALSE,
-  "math_person",   "Interest & self-efficacy",   "See myself as a math person",  FALSE,
-  "can_solve",     "Interest & self-efficacy",   "Can solve math problems",      FALSE,
+  "enjoy",         "Attitudes",   "Enjoy math this year",         FALSE,
+  "interesting",   "Attitudes",   "Find it interesting",          FALSE,
+  "important",     "Attitudes",   "Important to everyday life",   FALSE,
+  "math_person",   "Attitudes",   "See myself as a math person",  FALSE,
+  "can_solve",     "Attitudes",   "Can solve math problems",      FALSE,
   "belonging",     "Belonging",                  "Sense of belonging",           FALSE,
   "valued",        "Belonging",                  "Feel like a valued member",    FALSE,
   "comfortable",   "Belonging",                  "Comfortable sharing ideas",    FALSE,
-  "many_ways",     "Classroom culture",          "We value many ways",           FALSE,
-  "mistakes",      "Classroom culture",          "Mistakes help learning",       FALSE,
-  "explain",       "Classroom culture",          "Asked to explain thinking",    FALSE,
-  "classmates",    "Classroom culture",          "Classmates have good ideas",   FALSE,
-  "teacher_talks", "Classroom culture",          "Teacher does most talking",    TRUE
+  "many_ways",     "Classroom Culture",          "We value many ways",           FALSE,
+  "mistakes",      "Classroom Culture",          "Mistakes help learning",       FALSE,
+  "explain",       "Classroom Culture",          "Asked to explain thinking",    FALSE,
+  "classmates",    "Classroom Culture",          "Classmates have good ideas",   FALSE,
+  "teacher_talks", "Classroom Culture",          "Teacher does most talking",    TRUE
 )
 
-construct_levels <- c("Interest & self-efficacy", "Belonging", "Classroom culture")
+construct_levels <- c("Attitudes", "Belonging", "Classroom Culture")
 
 # ---- Load the cleaned, tidy responses (produced by prep_data.R) ----
 # Long format, columns: district, school, student_id, item, response (1-4).
@@ -198,7 +198,7 @@ cat(paste0(
 #| fig-height: 3.1
 pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 
-(pies[["Interest & self-efficacy"]] | pies[["Belonging"]] | pies[["Classroom culture"]]) +
+(pies[["Attitudes"]] | pies[["Belonging"]] | pies[["Classroom Culture"]]) +
   plot_annotation(
     caption = paste0(
       "Each circle represents the average percent of students who agree or strongly agree across the domain's items.  ",
