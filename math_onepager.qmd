@@ -199,7 +199,7 @@ pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
   plot_annotation(
     caption = paste0(
       "Each circle represents the average percent of students who agree or strongly agree across the domain's items.  ",
-      "Items below the response minimum are excluded."),
+      "Items below 10 responses are excluded."),
     theme = theme(plot.caption = element_text(size = 7.5, colour = brand$muted, hjust = 0))
   )
 ```
