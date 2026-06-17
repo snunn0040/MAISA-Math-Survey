@@ -6,7 +6,7 @@ format:
       x: 1.4cm
       y: 1.4cm
 params:
-  school: "School A"
+  district: "District A"
   min_n: 10
 execute:
   echo: false
@@ -48,31 +48,23 @@ construct_cols <- c("Interest & self-efficacy" = "#1D9E75",
 # Long format, columns: school, student_id, item, response (1-5).
 responses <- readr::read_csv("responses.csv", show_col_types = FALSE)
 
-# ---- Filter to the school passed in by the render loop ----
-school_data <- responses |> filter(school == params$school)
-n_students  <- n_distinct(school_data$student_id)
+# ---- Filter to the district passed in by the render loop ----
+district_data <- responses |> filter(district == params$district)
+n_students    <- n_distinct(district_data$student_id)
+n_schools     <- n_distinct(district_data$school)
 
-# Distinct specialists serving this school (specialist is a student-level
-# attribute carried through from prep_data.R). Degrades gracefully if the
-# column isn't present yet.
-n_specialists <- if ("specialist" %in% names(school_data)) {
-  n_distinct(school_data$specialist[!is.na(school_data$specialist)])
-} else {
-  NA_integer_
-}
-
-# Fail clearly if the school filter matched nothing, instead of erroring
-# deep in the plotting code. Usually means params$school doesn't match a
-# value in responses.csv (render via render_all.R, which pulls the school
-# names straight from the data), or the school column is blank/NA upstream.
-if (nrow(school_data) == 0) {
-  stop("No responses for school = '", params$school, "'. ",
-       "Available schools: ",
-       paste(sort(unique(responses$school)), collapse = ", "))
+# Fail clearly if the district filter matched nothing, instead of erroring
+# deep in the plotting code. Usually means params$district doesn't match a
+# value in responses.csv (render via render_all.R, which pulls the district
+# names straight from the data), or the district column is blank/NA upstream.
+if (nrow(district_data) == 0) {
+  stop("No responses for district = '", params$district, "'. ",
+       "Available districts: ",
+       paste(sort(unique(responses$district)), collapse = ", "))
 }
 
 # ---- % agree (top-2-box) per item, with small-cell suppression ----
-agree <- school_data |>
+agree <- district_data |>
   group_by(item) |>
   summarise(n = sum(!is.na(response)),
             pct_agree = mean(response >= 4, na.rm = TRUE) * 100,
@@ -143,7 +135,7 @@ layout <- pies[["Interest & self-efficacy"]] |
   pies[["Classroom culture"]]
 
 layout + plot_annotation(
-  title    = paste0(params$school, " \u2014 student math perceptions, spring 2026"),
+  title    = paste0(params$district, " \u2014 student math perceptions, spring 2026"),
   subtitle = paste0("n = ", n_students,
                     " students  \u00b7  each circle = average % who agree or strongly agree",
                     " (top-2-box) across the factor's items",
@@ -165,7 +157,7 @@ layout + plot_annotation(
 
 **About this survey.** A survey of 4th- and 5th-grade students' perceptions
 of mathematics, conducted in spring 2026. This page reflects
-**`r n_students`** student responses and
-**`r ifelse(is.na(n_specialists), "n/a", n_specialists)`** specialist`r if (!is.na(n_specialists) && n_specialists == 1) "" else "s"`
-at *`r params$school`*.
+**`r n_students`** student responses across
+**`r n_schools`** school`r if (n_schools == 1) "" else "s"`
+in *`r params$district`*.
 
