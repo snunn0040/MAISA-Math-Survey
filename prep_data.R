@@ -40,8 +40,9 @@ responses_are_text <- FALSE
 ###  "Strongly agree"             = 5
 ###)
 school_lookup <- read_csv("school_lookup.csv", show_col_types = FALSE) |>
-  transmute(school_code = as.character(school_code),  # <- code column in your file
-            school_name = school_name)                # <- name column in your file
+  transmute(school_code   = as.character(school_code),  # <- code column in your file
+            school_name   = school_name,                # <- name column in your file
+            district_name = district_name)              # <- district column in your file
 
 # --- 5. Pivot to long + clean ------------------------------
 responses <- raw |>
@@ -50,10 +51,9 @@ responses <- raw |>
   mutate(school_code = str_trim(as.character(school_code))) |>
   left_join(school_lookup, by = "school_code") |>
   rename(school = school_name) |>
-  # `specialist` is a student-level attribute carried through to the report
-  # (used for the per-school specialist count). If your raw export names it
-  # something else, rename it to `specialist` above this select().
-  select(student_id, school, specialist, all_of(names(item_map))) |>
+  # Carry district (for the per-district report) and school (so we can
+  # count how many schools each district contributed) through to the report.
+  select(student_id, district = district_name, school, all_of(names(item_map))) |>
   pivot_longer(all_of(names(item_map)),
                names_to = "qcol", values_to = "response") |>
   mutate(
@@ -64,7 +64,7 @@ responses <- raw |>
       as.integer(response)
     }
   ) |>
-  select(school, student_id, specialist, item, response)
+  select(district, school, student_id, item, response)
 
 # --- 6. Quick sanity checks (printed to console) -----------
 unmapped <- responses |> filter(is.na(response))
@@ -80,10 +80,16 @@ if (length(missing_items) > 0) {
           paste(missing_items, collapse = ", "))
 }
 
-cat("\nSchools found (copy these into render_all.R):\n")
-print(sort(unique(responses$school)))
-cat("\nResponses per school:\n")
-print(count(responses, school))
+cat("\nDistricts found (one one-pager each):\n")
+print(sort(unique(responses$district)))
+cat("\nDistinct schools and student responses per district:\n")
+print(
+  responses |>
+    group_by(district) |>
+    summarise(n_schools  = n_distinct(school),
+              n_students = n_distinct(student_id),
+              .groups = "drop")
+)
 
 # --- 7. Write the tidy file the report reads ---------------
 write_csv(responses, "responses.csv")
