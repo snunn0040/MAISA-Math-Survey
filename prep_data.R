@@ -46,10 +46,10 @@ school_lookup <- read_csv("school_lookup.csv", show_col_types = FALSE) |>
 
 # --- 5. Pivot to long + clean ------------------------------
 responses <- raw |>
-  rename(student_id = ResponseId,   
-         school     = Q22) |>        # the "what school" column
+  rename(student_id  = ResponseId,
+         school_code = Q22) |>        # Q22 holds the school CODE students picked
   mutate(school_code = str_trim(as.character(school_code))) |>
-  left_join(school_lookup, by = "school_code") |>
+  left_join(school_lookup, by = "school_code") |>   # code -> school_name + district_name
   rename(school = school_name) |>
   # Carry district (for the per-district report) and school (so we can
   # count how many schools each district contributed) through to the report.
