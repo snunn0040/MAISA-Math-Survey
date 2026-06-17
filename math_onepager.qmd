@@ -44,7 +44,7 @@ construct_cols <- c("Interest & self-efficacy" = "#1F4E79",
 #    skipped automatically, so the page still renders without them.
 logo_top_left  <- "logos/maisa_logo_int_simple.png"
 logo_top_right <- "logos/early_math_logo.png"
-logo_footer    <- "logos/MenloEDU-logo-main-reverse1-CMYK.png"
+logo_footer    <- "logos/MenloEDU-logo-Day-CMYK.png"
 
 # 4) Summary text (the team writes the real summary here).
 summary_text <- "SUMMARY GOES HERE — to be written by the team."
