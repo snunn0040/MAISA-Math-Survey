@@ -45,6 +45,9 @@ construct_cols <- c("Interest & self-efficacy" = "#1F4E79",
 logo_top_left  <- "logos/logo_top_left.png"
 logo_top_right <- "logos/logo_top_right.png"
 logo_footer    <- "logos/logo_footer.png"
+# Logo sizes (bump these to resize). Any Typst length works, e.g. "1.4cm".
+logo_top_height    <- "1.0cm"   # the two top logos
+logo_footer_height <- "1.5cm"   # the footer logo
 
 # 4) Summary text (the team writes the real summary here).
 summary_text <- "SUMMARY GOES HERE — to be written by the team."
@@ -168,8 +171,8 @@ cat(paste0(
 '#grid(\n',
 '  columns: (1fr, 1fr),\n',
 '  align: (left + horizon, right + horizon),\n',
-'  ', emit_logo(logo_top_left), ',\n',
-'  ', emit_logo(logo_top_right), ',\n',
+'  ', emit_logo(logo_top_left, height = logo_top_height), ',\n',
+'  ', emit_logo(logo_top_right, height = logo_top_height), ',\n',
 ')\n',
 '#v(10pt)\n',
 '#block(\n',
@@ -240,7 +243,7 @@ cat(paste0(
 '  text(size: 8pt, fill: rgb("', brand$muted,
        '"))[Source: Spring 2026 student math perceptions survey (grades 4–5).  Prepared ',
        format(Sys.Date(), "%B %Y"), '.],\n',
-'  ', emit_logo(logo_footer, height = "0.9cm"), ',\n',
+'  ', emit_logo(logo_footer, height = logo_footer_height), ',\n',
 ')\n',
 '```\n'
 ))
