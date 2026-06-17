@@ -3,8 +3,9 @@ format:
   typst:
     papersize: us-letter
     margin:
-      x: 1.4cm
+      x: 1.6cm
       y: 1.4cm
+    mainfont: "Helvetica Neue"
 params:
   district: "District A"
   min_n: 10
@@ -18,6 +19,45 @@ execute:
 #| label: setup
 library(tidyverse)
 library(patchwork)
+
+# ======================================================================
+#  BRAND CONFIG  —  edit this block to rebrand the whole one-pager.
+# ----------------------------------------------------------------------
+# 1) Colors: replace the placeholder hex codes with your brand colors.
+#    `primary` is the header-band fill; the band text is white, so keep
+#    `primary` a DARK color.
+brand <- list(
+  primary = "#1F4E79",   # header band + section headings (keep dark)
+  ink     = "#1A1A1A",   # body text / big numbers fallback
+  muted   = "#6B7280",   # captions, footnotes, source line
+  track   = "#E6E8EC",   # the "rest" (un-filled) part of each donut
+  rule    = "#D7DBE0",   # thin divider lines / box borders
+  panel   = "#F4F6F8"    # summary box fill
+)
+
+# 2) One color per factor (the filled part of each donut).
+construct_cols <- c("Interest & self-efficacy" = "#1F4E79",
+                    "Belonging"                = "#2E9E8F",
+                    "Classroom culture"        = "#E08A1E")
+
+# 3) Logos: drop files in ./logos/ (PNG or SVG). Missing files are
+#    skipped automatically, so the page still renders without them.
+logo_top_left  <- "logos/logo_top_left.png"
+logo_top_right <- "logos/logo_top_right.png"
+logo_footer    <- "logos/logo_footer.png"
+
+# 4) Summary text (the team writes the real summary here).
+summary_text <- "SUMMARY GOES HERE — to be written by the team."
+
+# Helper: emit a Typst image() call only if the file exists, else empty.
+emit_logo <- function(path, height = "1.0cm") {
+  if (!is.null(path) && file.exists(path)) {
+    sprintf('image("%s", height: %s)', path, height)
+  } else {
+    "[]"
+  }
+}
+# ======================================================================
 
 # ---- Item dictionary: raw item -> construct -> short label -> reverse flag ----
 # Edit the labels/constructs here; everything downstream is driven off this table.
@@ -40,12 +80,9 @@ items <- tribble(
 )
 
 construct_levels <- c("Interest & self-efficacy", "Belonging", "Classroom culture")
-construct_cols <- c("Interest & self-efficacy" = "#1D9E75",
-                    "Belonging"                = "#D85A30",
-                    "Classroom culture"        = "#378ADD")
 
 # ---- Load the cleaned, tidy responses (produced by prep_data.R) ----
-# Long format, columns: school, student_id, item, response (1-5).
+# Long format, columns: district, school, student_id, item, response (1-4).
 responses <- readr::read_csv("responses.csv", show_col_types = FALSE)
 
 # ---- Filter to the district passed in by the render loop ----
@@ -54,9 +91,7 @@ n_students    <- n_distinct(district_data$student_id)
 n_schools     <- n_distinct(district_data$school)
 
 # Fail clearly if the district filter matched nothing, instead of erroring
-# deep in the plotting code. Usually means params$district doesn't match a
-# value in responses.csv (render via render_all.R, which pulls the district
-# names straight from the data), or the district column is blank/NA upstream.
+# deep in the plotting code.
 if (nrow(district_data) == 0) {
   stop("No responses for district = '", params$district, "'. ",
        "Available districts: ",
@@ -74,13 +109,11 @@ agree <- district_data |>
     suppressed = n < params$min_n,
     # direction-corrected: flip reverse-coded items so that, for every
     # item, a higher % means "more student-centered / more positive".
-    # (4-point scale has no neutral midpoint, so the flip is 100 - pct.)
     dir_pct    = ifelse(reverse, 100 - pct_agree, pct_agree),
     construct  = factor(construct, levels = construct_levels)
   )
 
-# ---- One aggregate % per factor: mean of the (direction-corrected) item
-# %-agree across that factor's non-suppressed items ----
+# ---- One aggregate % per factor ----
 construct_pct <- agree |>
   filter(!suppressed) |>
   group_by(construct) |>
@@ -91,73 +124,121 @@ pct_lookup <- setNames(construct_pct$pct, as.character(construct_pct$construct))
 
 ```{r}
 #| label: plot-functions
-# One pie per factor: the colored slice is the aggregate % agree, the
-# grey slice is the remainder. The % is printed big in the center
-# (donut-style) so it stays legible regardless of slice size.
+# Clean, modern donut: thin ring, big number in the factor color, the
+# factor name beneath. The colored arc is the aggregate % agree.
 plot_pie <- function(construct_name, pct, fill_col) {
+  hsize <- 4  # larger -> bigger hole / thinner ring
   base <- theme_void(base_size = 11) +
-    theme(plot.title  = element_text(face = "bold", size = 11.5, hjust = 0.5),
-          plot.margin = margin(6, 6, 6, 6))
+    theme(plot.title  = element_text(face = "bold", size = 10.5,
+                                     colour = brand$ink, hjust = 0.5,
+                                     margin = margin(t = 6)),
+          plot.margin = margin(6, 10, 6, 10))
 
-  # All items in this factor were suppressed -> no number to show.
   if (is.na(pct)) {
     return(
       ggplot() +
         annotate("text", x = 0, y = 0, label = "n too small",
-                 size = 4, colour = "grey55") +
+                 size = 3.5, colour = brand$muted) +
         labs(title = construct_name) + base
     )
   }
 
   d <- tibble(part  = factor(c("agree", "rest"), levels = c("agree", "rest")),
               value = c(pct, 100 - pct))
-  ggplot(d, aes(x = 2, y = value, fill = part)) +
-    geom_col(width = 1, colour = "white") +
-    coord_polar(theta = "y", start = 0) +
-    xlim(0.5, 2.5) +
-    scale_fill_manual(values = c(agree = fill_col, rest = "grey88"),
+  ggplot(d, aes(x = hsize, y = value, fill = part)) +
+    geom_col(width = 1, colour = "white", linewidth = 0.6) +
+    coord_polar(theta = "y") +
+    xlim(c(0.2, hsize + 0.5)) +
+    scale_fill_manual(values = c(agree = fill_col, rest = brand$track),
                       guide = "none") +
-    annotate("text", x = 0.5, y = 0, label = paste0(pct, "%"),
-             size = 8, fontface = "bold", colour = "grey15") +
+    annotate("text", x = 0.2, y = 0, label = paste0(pct, "%"),
+             size = 9, fontface = "bold", colour = fill_col) +
     labs(title = construct_name) + base
 }
 ```
 
 ```{r}
-#| label: fig-onepager
-#| fig-width: 7.4
-#| fig-height: 3.6
-# One pie per factor, side by side.
-pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
-
-layout <- pies[["Interest & self-efficacy"]] |
-  pies[["Belonging"]] |
-  pies[["Classroom culture"]]
-
-layout + plot_annotation(
-  title    = paste0(params$district, " \u2014 student math perceptions, spring 2026"),
-  subtitle = paste0("n = ", n_students,
-                    " students  \u00b7  each circle = average % who agree or strongly agree",
-                    " (top-2-box) across the factor's items",
-                    "  \u00b7  reverse-coded items flipped so higher = more student-centered"),
-  caption  = "Items with fewer than the minimum responses are excluded from their factor's average.",
-  theme = theme(
-    plot.title    = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 9, colour = "grey35"),
-    plot.caption  = element_text(size = 8, colour = "grey45")
-  )
-)
+#| label: header
+#| output: asis
+cat(paste0(
+'```{=typst}\n',
+'#grid(\n',
+'  columns: (1fr, 1fr),\n',
+'  align: (left + horizon, right + horizon),\n',
+'  ', emit_logo(logo_top_left), ',\n',
+'  ', emit_logo(logo_top_right), ',\n',
+')\n',
+'#v(10pt)\n',
+'#block(\n',
+'  width: 100%,\n',
+'  fill: rgb("', brand$primary, '"),\n',
+'  inset: (x: 16pt, y: 13pt),\n',
+'  radius: 6pt,\n',
+')[\n',
+'  #text(fill: white, weight: "bold", size: 18pt)[', params$district, ']\n',
+'  #v(3pt)\n',
+'  #text(fill: white, size: 10pt)[Student math perceptions  ·  Spring 2026  ·  ',
+       n_students, ' students across ', n_schools, ' ',
+       if (n_schools == 1) "school" else "schools", ']\n',
+']\n',
+'#v(14pt)\n',
+'```\n'
+))
 ```
 
-## Summary
+```{r}
+#| label: fig-onepager
+#| fig-width: 7.6
+#| fig-height: 3.1
+pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 
-**SUMMARY GOES HERE** *(to be written by the team)*
+(pies[["Interest & self-efficacy"]] | pies[["Belonging"]] | pies[["Classroom culture"]]) +
+  plot_annotation(
+    caption = paste0(
+      "Each circle = average % who agree or strongly agree (top-2-box) across the factor's items.  ",
+      "Reverse-coded items are flipped so higher = more student-centered.  ",
+      "Items below the response minimum are excluded."),
+    theme = theme(plot.caption = element_text(size = 7.5, colour = brand$muted, hjust = 0))
+  )
+```
 
-------------------------------------------------------------------------
+```{r}
+#| label: summary-box
+#| output: asis
+cat(paste0(
+'```{=typst}\n',
+'#v(12pt)\n',
+'#block(\n',
+'  width: 100%,\n',
+'  fill: rgb("', brand$panel, '"),\n',
+'  stroke: 0.5pt + rgb("', brand$rule, '"),\n',
+'  inset: 13pt,\n',
+'  radius: 6pt,\n',
+')[\n',
+'  #text(weight: "bold", size: 11pt, fill: rgb("', brand$primary, '"))[Summary]\n',
+'  #v(5pt)\n',
+'  #text(size: 10pt, fill: rgb("', brand$ink, '"))[', summary_text, ']\n',
+']\n',
+'```\n'
+))
+```
 
-**About this survey.** A survey of 4th- and 5th-grade students' perceptions
-of mathematics, conducted in spring 2026. This page reflects
-**`r n_students`** student responses across
-**`r n_schools`** school`r if (n_schools == 1) "" else "s"`
-in *`r params$district`*.
-
+```{r}
+#| label: footer
+#| output: asis
+cat(paste0(
+'```{=typst}\n',
+'#v(14pt)\n',
+'#line(length: 100%, stroke: 0.5pt + rgb("', brand$rule, '"))\n',
+'#v(6pt)\n',
+'#grid(\n',
+'  columns: (1fr, auto),\n',
+'  align: (left + horizon, right + horizon),\n',
+'  text(size: 8pt, fill: rgb("', brand$muted,
+       '"))[Source: Spring 2026 student math perceptions survey (grades 4–5).  Prepared ',
+       format(Sys.Date(), "%B %Y"), '.],\n',
+'  ', emit_logo(logo_footer, height = "0.9cm"), ',\n',
+')\n',
+'```\n'
+))
+```
