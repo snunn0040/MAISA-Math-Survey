@@ -99,12 +99,13 @@ if (nrow(district_data) == 0) {
 }
 
 # ---- % who agree or strongly agree per item, with small-cell suppression ----
-# 4-point scale (1=strongly disagree ... 4=strongly agree): "agree or
-# strongly agree" = the top two boxes = response >= 3.
+# 4-point scale is coded DESCENDING (1=strongly agree, 2=agree, 3=disagree,
+# 4=strongly disagree), so "agree or strongly agree" = the two lowest
+# numbers = response <= 2.
 agree <- district_data |>
   group_by(item) |>
   summarise(n = sum(!is.na(response)),
-            pct_agree = mean(response >= 3, na.rm = TRUE) * 100,
+            pct_agree = mean(response <= 2, na.rm = TRUE) * 100,
             .groups = "drop") |>
   left_join(items, by = "item") |>
   mutate(
