@@ -98,11 +98,13 @@ if (nrow(district_data) == 0) {
        paste(sort(unique(responses$district)), collapse = ", "))
 }
 
-# ---- % agree (top-2-box) per item, with small-cell suppression ----
+# ---- % who agree or strongly agree per item, with small-cell suppression ----
+# 4-point scale (1=strongly disagree ... 4=strongly agree): "agree or
+# strongly agree" = the top two boxes = response >= 3.
 agree <- district_data |>
   group_by(item) |>
   summarise(n = sum(!is.na(response)),
-            pct_agree = mean(response >= 4, na.rm = TRUE) * 100,
+            pct_agree = mean(response >= 3, na.rm = TRUE) * 100,
             .groups = "drop") |>
   left_join(items, by = "item") |>
   mutate(
@@ -195,7 +197,7 @@ pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 (pies[["Interest & self-efficacy"]] | pies[["Belonging"]] | pies[["Classroom culture"]]) +
   plot_annotation(
     caption = paste0(
-      "Each circle = average % who agree or strongly agree (top-2-box) across the factor's items.  ",
+      "Each circle = average % who agree or strongly agree across the factor's items.  ",
       "Reverse-coded items are flipped so higher = more student-centered.  ",
       "Items below the response minimum are excluded."),
     theme = theme(plot.caption = element_text(size = 7.5, colour = brand$muted, hjust = 0))
