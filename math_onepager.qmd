@@ -27,12 +27,12 @@ library(patchwork)
 #    `primary` is the header-band fill; the band text is white, so keep
 #    `primary` a DARK color.
 brand <- list(
-  primary = "#1F4E79",   # header band + section headings (keep dark)
+  primary = "#08436A",   # header band + section headings (keep dark)
   ink     = "#1A1A1A",   # body text / big numbers fallback
   muted   = "#6B7280",   # captions, footnotes, source line
   track   = "#E6E8EC",   # the "rest" (un-filled) part of each donut
   rule    = "#D7DBE0",   # thin divider lines / box borders
-  panel   = "#F4F6F8"    # summary box fill
+  panel   = "#F2C75C"    # summary box fill
 )
 
 # 2) One color per factor (the filled part of each donut).
@@ -42,9 +42,9 @@ construct_cols <- c("Interest & self-efficacy" = "#1F4E79",
 
 # 3) Logos: drop files in ./logos/ (PNG or SVG). Missing files are
 #    skipped automatically, so the page still renders without them.
-logo_top_left  <- "logos/logo_top_left.png"
-logo_top_right <- "logos/logo_top_right.png"
-logo_footer    <- "logos/logo_footer.png"
+logo_top_left  <- "logos/maisa_logo_int_simple.png"
+logo_top_right <- "logos/early_math_logo.png"
+logo_footer    <- "logos/MenloEDU-logo-main-reverse1-CMYK.png"
 
 # 4) Summary text (the team writes the real summary here).
 summary_text <- "SUMMARY GOES HERE — to be written by the team."
@@ -198,8 +198,7 @@ pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 (pies[["Interest & self-efficacy"]] | pies[["Belonging"]] | pies[["Classroom culture"]]) +
   plot_annotation(
     caption = paste0(
-      "Each circle = average % who agree or strongly agree across the factor's items.  ",
-      "Reverse-coded items are flipped so higher = more student-centered.  ",
+      "Each circle represents the average percent of students who agree or strongly agree across the domain's items.  ",
       "Items below the response minimum are excluded."),
     theme = theme(plot.caption = element_text(size = 7.5, colour = brand$muted, hjust = 0))
   )
