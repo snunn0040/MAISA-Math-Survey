@@ -101,29 +101,32 @@ if (nrow(district_data) == 0) {
        paste(sort(unique(responses$district)), collapse = ", "))
 }
 
-# ---- % who agree or strongly agree per item, with small-cell suppression ----
+# ---- Pooled % agree/strongly agree per factor, with small-cell suppression ----
 # 4-point scale is coded DESCENDING (1=strongly agree, 2=agree, 3=disagree,
-# 4=strongly disagree), so "agree or strongly agree" = the two lowest
-# numbers = response <= 2.
-agree <- district_data |>
-  group_by(item) |>
-  summarise(n = sum(!is.na(response)),
-            pct_agree = mean(response <= 2, na.rm = TRUE) * 100,
-            .groups = "drop") |>
-  left_join(items, by = "item") |>
-  mutate(
-    suppressed = n < params$min_n,
-    # direction-corrected: flip reverse-coded items so that, for every
-    # item, a higher % means "more student-centered / more positive".
-    dir_pct    = ifelse(reverse, 100 - pct_agree, pct_agree),
-    construct  = factor(construct, levels = construct_levels)
-  )
+# 4=strongly disagree). A response counts as "positive" (agree/strongly
+# agree) when it is 1 or 2 -- except for reverse-coded items, where the
+# student-centered direction is disagreement, so 3 or 4 counts as positive.
+#
+# Each factor's % = (all positive responses across its items) /
+#                   (all responses across its items), pooled at the
+# response level (so items with more responses carry more weight).
 
-# ---- One aggregate % per factor ----
-construct_pct <- agree |>
+# Per-item response counts (drives small-cell suppression).
+item_n <- district_data |>
+  group_by(item) |>
+  summarise(n = sum(!is.na(response)), .groups = "drop") |>
+  mutate(suppressed = n < params$min_n)
+
+# Response-level positives, direction-corrected, then pooled per factor.
+construct_pct <- district_data |>
+  filter(!is.na(response)) |>
+  left_join(select(items, item, construct, reverse), by = "item") |>
+  left_join(select(item_n, item, suppressed), by = "item") |>
   filter(!suppressed) |>
+  mutate(positive = ifelse(reverse, response >= 3, response <= 2),
+         construct = factor(construct, levels = construct_levels)) |>
   group_by(construct) |>
-  summarise(pct = round(mean(dir_pct)), .groups = "drop") |>
+  summarise(pct = round(sum(positive) / n() * 100), .groups = "drop") |>
   complete(construct = factor(construct_levels, levels = construct_levels))
 pct_lookup <- setNames(construct_pct$pct, as.character(construct_pct$construct))
 ```
@@ -201,7 +204,7 @@ pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 (pies[["Attitudes"]] | pies[["Belonging"]] | pies[["Classroom Culture"]]) +
   plot_annotation(
     caption = paste0(
-      "Each circle represents the average percent of students who agree or strongly agree across the domain's items.  ",
+      "Each circle represents the percent of responses across the domain's items that were agree or strongly agree.  ",
       "Items below 10 responses are excluded."),
     theme = theme(plot.caption = element_text(size = 7.5, colour = brand$muted, hjust = 0))
   )
