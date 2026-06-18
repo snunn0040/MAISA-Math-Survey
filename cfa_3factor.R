@@ -78,3 +78,37 @@ saveRDS(fit, "cfa_3factor_fit.rds")
 # --- 8. Covariance/Correlations ---------------------------------------
 lavInspect(fit, "cov.lv")              # latent covariance matrix
 cov2cor(lavInspect(fit, "cov.lv"))     # as correlations — easier to read
+
+# --- 9. Write tidy CSV outputs (for sharing) --------------------------
+# NOTE: saveRDS() above writes a *binary* R object; renaming it .csv just
+# produces unreadable bytes. CSVs need plain-text tables, built below.
+std     <- standardizedSolution(fit)
+factors <- c("attitudes", "belong", "classroom")
+
+# (a) Robust/scaled fit indices -> one row per measure
+fitMeasures(fit, c("chisq.scaled", "df.scaled", "pvalue.scaled",
+                   "cfi.scaled", "tli.scaled",
+                   "rmsea.scaled", "rmsea.ci.lower.scaled",
+                   "rmsea.ci.upper.scaled", "srmr")) |>
+  enframe(name = "measure", value = "value") |>
+  mutate(value = round(value, 3)) |>
+  write_csv("cfa_3factor_fit.csv")
+
+# (b) Standardized factor loadings -> one row per item
+std |>
+  filter(op == "=~") |>
+  transmute(factor = lhs, item = rhs,
+            std_loading = est.std, se, z, pvalue, ci.lower, ci.upper) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3))) |>
+  write_csv("cfa_3factor_loadings.csv")
+
+# (c) Factor correlations (standardized covariances among latent factors)
+std |>
+  filter(op == "~~", lhs != rhs, lhs %in% factors, rhs %in% factors) |>
+  transmute(factor_1 = lhs, factor_2 = rhs,
+            correlation = est.std, se, z, pvalue, ci.lower, ci.upper) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3))) |>
+  write_csv("cfa_3factor_correlations.csv")
+
+cat("\nWrote: cfa_3factor_fit.csv, cfa_3factor_loadings.csv,",
+    "cfa_3factor_correlations.csv\n")
