@@ -186,7 +186,7 @@ cat(paste0(
 ')[\n',
 '  #text(fill: white, weight: "bold", size: 18pt)[', params$district, ']\n',
 '  #v(3pt)\n',
-'  #text(fill: white, size: 10pt)[Student math perceptions  ·  Spring 2026  ·  ',
+'  #text(fill: white, size: 14pt)[Student math perceptions  ·  Spring 2026  ·  ',
        n_students, ' students across ', n_schools, ' ',
        if (n_schools == 1) "school" else "schools", ']\n',
 ']\n',
