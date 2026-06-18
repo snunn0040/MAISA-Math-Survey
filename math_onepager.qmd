@@ -211,6 +211,44 @@ pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 ```
 
 ```{r}
+#| label: descriptors
+#| output: asis
+# Short descriptor under each pie, color-coded to its factor. Edit the
+# text here; colors come from construct_cols so they always match the plots.
+descriptions <- c(
+  "Attitudes" = "Student attitudes about mathematics can shape motivation, engagement and persistence and in turn influence learning and achievement. Student attitudes about mathematics includes things like finding math enjoyable, interesting, and important beyond the classroom; as well as ideas about their own mathematics identity.",
+  "Belonging" = "Belonging is understood to be a prerequisite for learning. Here, student belonging in math class includes things like feeling like a valued class member and feeling comfortable sharing ideas.",
+  "Classroom Culture" = "The classroom culture sets the foundation for how students view and engage with mathematics as a discipline. Here, classroom culture includes things like valuing students' mathematical ideas, elevating multiple solution paths, and learning from mistakes."
+)
+
+desc_cell <- function(name) {
+  col <- construct_cols[[name]]
+  paste0(
+    '[\n',
+    '  #text(weight: "bold", size: 10pt, fill: rgb("', col, '"))[', name, ']\n',
+    '  #v(3pt)\n',
+    '  #line(length: 100%, stroke: 1.5pt + rgb("', col, '"))\n',
+    '  #v(5pt)\n',
+    '  #text(size: 8.5pt, fill: rgb("', brand$ink, '"))[', descriptions[[name]], ']\n',
+    ']'
+  )
+}
+
+cat(paste0(
+'```{=typst}\n',
+'#v(14pt)\n',
+'#grid(\n',
+'  columns: (1fr, 1fr, 1fr),\n',
+'  column-gutter: 16pt,\n',
+'  ', desc_cell("Attitudes"), ',\n',
+'  ', desc_cell("Belonging"), ',\n',
+'  ', desc_cell("Classroom Culture"), ',\n',
+')\n',
+'```\n'
+))
+```
+
+```{r}
 #| label: summary-box
 #| output: asis
 cat(paste0(
