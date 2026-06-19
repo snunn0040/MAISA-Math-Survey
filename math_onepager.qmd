@@ -43,7 +43,7 @@ logo_top_left  <- "logos/maisa_logo_int_simple.png"
 logo_top_right <- "logos/early_math_logo.png"
 logo_footer    <- "logos/MenloEDU-logo-Day-CMYK.png"
 # Logo sizes (bump these to resize). Any Typst length works, e.g. "1.4cm".
-logo_top_height    <- "1.0cm"   # the two top logos
+logo_top_height    <- "1.4cm"   # the two top logos
 logo_footer_height <- "1.5cm"   # the footer logo
 
 # 4) Summary text (summary text can go here and then will render below).
@@ -161,7 +161,7 @@ cat(paste0(
 '  ', emit_logo(logo_top_left, height = logo_top_height), ',\n',
 '  ', emit_logo(logo_top_right, height = logo_top_height), ',\n',
 ')\n',
-'#v(10pt)\n',
+'#v(2pt)\n',
 '#block(\n',
 '  width: 100%,\n',
 '  fill: rgb("', brand$primary, '"),\n',
