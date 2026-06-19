@@ -3,8 +3,8 @@ format:
   typst:
     papersize: us-letter
     margin:
-      x: 1.6cm
-      y: 1.4cm
+      x: 1.3cm
+      y: 1.1cm
     mainfont: "Helvetica Neue"
 params:
   district: "District A"
@@ -122,10 +122,10 @@ pct_lookup <- setNames(construct_pct$pct, as.character(construct_pct$construct))
 plot_pie <- function(construct_name, pct, fill_col) {
   hsize <- 4  # larger -> bigger hole / thinner ring
   base <- theme_void(base_size = 11) +
-    theme(plot.title  = element_text(face = "bold", size = 10.5,
+    theme(plot.title  = element_text(face = "bold", size = 12,
                                      colour = brand$ink, hjust = 0.5,
-                                     margin = margin(t = 6)),
-          plot.margin = margin(6, 10, 6, 10))
+                                     margin = margin(t = 3)),
+          plot.margin = margin(2, 8, 2, 8))
 
   if (is.na(pct)) {
     return(
@@ -174,7 +174,7 @@ cat(paste0(
        n_students, ' students across ', n_schools, ' ',
        if (n_schools == 1) "school" else "schools", ']\n',
 ']\n',
-'#v(14pt)\n',
+'#v(10pt)\n',
 '```\n'
 ))
 ```
@@ -182,14 +182,14 @@ cat(paste0(
 ```{r}
 #| label: onepager
 #| fig-width: 7.6
-#| fig-height: 3.1
+#| fig-height: 2.6
 pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 
 (pies[["Attitudes"]] | pies[["Belonging"]] | pies[["Classroom Culture"]]) +
   plot_annotation(
     caption = paste0(
       "Each circle represents the percent of agree and strongly agree responses across the survey items in each domain.  "),
-    theme = theme(plot.caption = element_text(size = 7.5, colour = brand$muted, hjust = 0))
+    theme = theme(plot.caption = element_text(size = 8.5, colour = brand$muted, hjust = 0))
   )
 ```
 
@@ -208,18 +208,18 @@ desc_cell <- function(name) {
   col <- construct_cols[[name]]
   paste0(
     '[\n',
-    '  #text(weight: "bold", size: 10pt, fill: rgb("', col, '"))[', name, ']\n',
+    '  #text(weight: "bold", size: 12pt, fill: rgb("', col, '"))[', name, ']\n',
     '  #v(3pt)\n',
     '  #line(length: 100%, stroke: 1.5pt + rgb("', col, '"))\n',
     '  #v(5pt)\n',
-    '  #text(size: 8.5pt, fill: rgb("', brand$ink, '"))[', descriptions[[name]], ']\n',
+    '  #text(size: 10pt, fill: rgb("', brand$ink, '"))[', descriptions[[name]], ']\n',
     ']'
   )
 }
 
 cat(paste0(
 '```{=typst}\n',
-'#v(14pt)\n',
+'#v(8pt)\n',
 '#grid(\n',
 '  columns: (1fr, 1fr, 1fr),\n',
 '  column-gutter: 16pt,\n',
@@ -236,7 +236,7 @@ cat(paste0(
 #| output: asis
 cat(paste0(
 '```{=typst}\n',
-'#v(12pt)\n',
+'#v(8pt)\n',
 '#block(\n',
 '  width: 100%,\n',
 '  fill: rgb("', brand$panel, '"),\n',
@@ -244,9 +244,9 @@ cat(paste0(
 '  inset: 13pt,\n',
 '  radius: 6pt,\n',
 ')[\n',
-'  #text(weight: "bold", size: 11pt, fill: rgb("', brand$primary, '"))[Summary]\n',
+'  #text(weight: "bold", size: 13pt, fill: rgb("', brand$primary, '"))[Summary]\n',
 '  #v(5pt)\n',
-'  #text(size: 10pt, fill: rgb("', brand$ink, '"))[', summary_text, ']\n',
+'  #text(size: 11.5pt, fill: rgb("', brand$ink, '"))[', summary_text, ']\n',
 ']\n',
 '```\n'
 ))
@@ -257,7 +257,7 @@ cat(paste0(
 #| output: asis
 cat(paste0(
 '```{=typst}\n',
-'#v(14pt)\n',
+'#v(10pt)\n',
 '#line(length: 100%, stroke: 0.5pt + rgb("', brand$rule, '"))\n',
 '#v(6pt)\n',
 '#grid(\n',
