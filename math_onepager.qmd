@@ -263,7 +263,7 @@ cat(paste0(
 '#grid(\n',
 '  columns: (1fr, auto),\n',
 '  align: (left + horizon, right + horizon),\n',
-'  text(size: 12pt, fill: rgb("', brand$muted,
+'  text(size: 10pt, fill: rgb("', brand$muted,
        '"))[Source: Spring 2026 Student Math Survey (Grades 4 & 5).  Prepared ',
        format(Sys.Date(), "%B %Y"), '.],\n',
 '  ', emit_logo(logo_footer, height = logo_footer_height), ',\n',
