@@ -199,9 +199,9 @@ pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 # Short descriptor under each pie, color-coded to factor. Edit the
 # text here.
 descriptions <- c(
-  "Attitudes" = "Student attitudes about mathematics can shape motivation, engagement and persistence and in turn influence learning and achievement. In this survey, attitudes reflect how much students enjoy and value math, find it relevant beyond the classroom, and see themselves as capable math learners.",
-  "Belonging" = "A sense of belonging is closely tied to students' willingness to engage and take intellectual risks in math. In this survey, belonging reflects whether students feel like a valued class member and are comfortable sharing ideas.",
-  "Classroom Culture" = "The classroom culture sets the foundation for how students view and engage with mathematics as a discipline. Here, classroom culture includes things like valuing students' mathematical ideas, elevating multiple solution paths, and learning from mistakes."
+  "Attitudes" = "Children's attitudes about mathematics can shape motivation, engagement and persistence and influence learning and achievement. Here, attitudes reflect how much children enjoy and value math, find it relevant beyond the classroom, and see themselves as capable math learners.",
+  "Belonging" = "A sense of belonging is closely tied to children's willingness to engage and take intellectual risks in math. Here, belonging reflects children feeling like a valued class member and thier comfort with sharing ideas.",
+  "Classroom Culture" = "Classroom culture sets the foundation for how children view and engage with mathematics as a discipline. Here, classroom culture includes things like valuing children's mathematical ideas, elevating multiple solution paths, and learning from mistakes."
 )
 
 desc_cell <- function(name) {
