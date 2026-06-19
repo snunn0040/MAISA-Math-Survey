@@ -174,7 +174,7 @@ cat(paste0(
        n_students, ' students across ', n_schools, ' ',
        if (n_schools == 1) "school" else "schools", ']\n',
 ']\n',
-'#v(10pt)\n',
+'#v(4pt)\n',
 '```\n'
 ))
 ```
@@ -208,7 +208,7 @@ desc_cell <- function(name) {
   col <- construct_cols[[name]]
   paste0(
     '[\n',
-    '  #text(weight: "bold", size: 12pt, fill: rgb("', col, '"))[', name, ']\n',
+    '  #text(weight: "bold", size: 14pt, fill: rgb("', col, '"))[', name, ']\n',
     '  #v(3pt)\n',
     '  #line(length: 100%, stroke: 1.5pt + rgb("', col, '"))\n',
     '  #v(5pt)\n',
