@@ -23,9 +23,7 @@ library(patchwork)
 # ======================================================================
 #  BRAND CONFIG  —  edit this block to rebrand the whole one-pager.
 # ----------------------------------------------------------------------
-# 1) Colors: replace the placeholder hex codes with your brand colors.
-#    `primary` is the header-band fill; the band text is white, so keep
-#    `primary` a DARK color.
+# 1) Colors:
 brand <- list(
   primary = "#08436A",   # header band + section headings (keep dark)
   ink     = "#1A1A1A",   # body text / big numbers fallback
@@ -35,13 +33,12 @@ brand <- list(
   panel   = "#F2C75C"    # summary box fill
 )
 
-# 2) One color per factor (the filled part of each donut).
+# 2) One color per factor
 construct_cols <- c("Attitudes" = "#1F4E79",
                     "Belonging"                = "#2E9E8F",
                     "Classroom Culture"        = "#E08A1E")
 
-# 3) Logos: drop files in ./logos/ (PNG or SVG). Missing files are
-#    skipped automatically, so the page still renders without them.
+# 3) Logos.
 logo_top_left  <- "logos/maisa_logo_int_simple.png"
 logo_top_right <- "logos/early_math_logo.png"
 logo_footer    <- "logos/MenloEDU-logo-Day-CMYK.png"
@@ -49,10 +46,10 @@ logo_footer    <- "logos/MenloEDU-logo-Day-CMYK.png"
 logo_top_height    <- "1.0cm"   # the two top logos
 logo_footer_height <- "1.5cm"   # the footer logo
 
-# 4) Summary text (the team writes the real summary here).
-summary_text <- "SUMMARY GOES HERE — to be written by the team."
+# 4) Summary text (summary text can go here and then will render below).
+summary_text <- "The Michigan Association of Intermediate School Administrators (MAISA) has been working with districts and schools to support early mathematics teaching and learning across the state of Michigan. The work supports new ways of knowing, doing, and becoming for children, teachers, and leaders. Specifically for children, the work supports a vision of mathematics learning where kids are encouraged to share and discuss ideas, experiment with multiple solutions, collaborate with classmates to figure things out, and experience joy through mathematics. As part of the external evaluation of this work, this survey measured Michigan kids' experiences of mathematics learning at school."
 
-# Helper: emit a Typst image() call only if the file exists, else empty.
+# Helper: 
 emit_logo <- function(path, height = "1.0cm") {
   if (!is.null(path) && file.exists(path)) {
     sprintf('image("%s", height: %s)', path, height)
@@ -63,7 +60,6 @@ emit_logo <- function(path, height = "1.0cm") {
 # ======================================================================
 
 # ---- Item dictionary: raw item -> construct -> short label -> reverse flag ----
-# Edit the labels/constructs here; everything downstream is driven off this table.
 # Constructs reflect the 3-factor CFA solution (see cfa_3factor.R).
 items <- tribble(
   ~item,           ~construct,                   ~label,                        ~reverse,
@@ -84,8 +80,7 @@ items <- tribble(
 
 construct_levels <- c("Attitudes", "Belonging", "Classroom Culture")
 
-# ---- Load the cleaned, tidy responses (produced by prep_data.R) ----
-# Long format, columns: district, school, student_id, item, response (1-4).
+# # Long format, columns: district, school, student_id, item, response (1-4).
 responses <- readr::read_csv("responses.csv", show_col_types = FALSE)
 
 # ---- Filter to the district passed in by the render loop ----
@@ -93,8 +88,7 @@ district_data <- responses |> filter(district == params$district)
 n_students    <- n_distinct(district_data$student_id)
 n_schools     <- n_distinct(district_data$school)
 
-# Fail clearly if the district filter matched nothing, instead of erroring
-# deep in the plotting code.
+# Fail clearly if the district filter matched nothing, instead of errors
 if (nrow(district_data) == 0) {
   stop("No responses for district = '", params$district, "'. ",
        "Available districts: ",
@@ -102,16 +96,7 @@ if (nrow(district_data) == 0) {
 }
 
 # ---- Pooled % agree/strongly agree per factor, with small-cell suppression ----
-# 4-point scale is coded DESCENDING (1=strongly agree, 2=agree, 3=disagree,
-# 4=strongly disagree). A response counts as "positive" (agree/strongly
-# agree) when it is 1 or 2 -- except for reverse-coded items, where the
-# student-centered direction is disagreement, so 3 or 4 counts as positive.
-#
-# Each factor's % = (all positive responses across its items) /
-#                   (all responses across its items), pooled at the
-# response level (so items with more responses carry more weight).
 
-# Per-item response counts (drives small-cell suppression).
 item_n <- district_data |>
   group_by(item) |>
   summarise(n = sum(!is.na(response)), .groups = "drop") |>
@@ -133,8 +118,7 @@ pct_lookup <- setNames(construct_pct$pct, as.character(construct_pct$construct))
 
 ```{r}
 #| label: plot-functions
-# Clean, modern donut: thin ring, big number in the factor color, the
-# factor name beneath. The colored arc is the aggregate % agree.
+
 plot_pie <- function(construct_name, pct, fill_col) {
   hsize <- 4  # larger -> bigger hole / thinner ring
   base <- theme_void(base_size = 11) +
@@ -184,9 +168,9 @@ cat(paste0(
 '  inset: (x: 16pt, y: 13pt),\n',
 '  radius: 6pt,\n',
 ')[\n',
-'  #text(fill: white, weight: "bold", size: 18pt)[', params$district, ']\n',
+'  #text(fill: white, weight: "bold", size: 20pt)[', params$district, ']\n',
 '  #v(3pt)\n',
-'  #text(fill: white, size: 14pt)[Student math perceptions  ·  Spring 2026  ·  ',
+'  #text(fill: white, size: 15pt)[Student Math Survey  ·  Spring 2026  ·  ',
        n_students, ' students across ', n_schools, ' ',
        if (n_schools == 1) "school" else "schools", ']\n',
 ']\n',
@@ -204,8 +188,7 @@ pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 (pies[["Attitudes"]] | pies[["Belonging"]] | pies[["Classroom Culture"]]) +
   plot_annotation(
     caption = paste0(
-      "Each circle represents the percent of responses across the domain's items that were agree or strongly agree.  ",
-      "Items below 10 responses are excluded."),
+      "Each circle represents the percent of agree and strongly agree responses across the survey items in each domain.  "),
     theme = theme(plot.caption = element_text(size = 7.5, colour = brand$muted, hjust = 0))
   )
 ```
@@ -213,11 +196,11 @@ pies <- imap(construct_cols, ~plot_pie(.y, pct_lookup[[.y]], .x))
 ```{r}
 #| label: descriptors
 #| output: asis
-# Short descriptor under each pie, color-coded to its factor. Edit the
-# text here; colors come from construct_cols so they always match the plots.
+# Short descriptor under each pie, color-coded to factor. Edit the
+# text here.
 descriptions <- c(
-  "Attitudes" = "Student attitudes about mathematics can shape motivation, engagement and persistence and in turn influence learning and achievement. Student attitudes about mathematics includes things like finding math enjoyable, interesting, and important beyond the classroom; as well as ideas about their own mathematics identity.",
-  "Belonging" = "Belonging is understood to be a prerequisite for learning. Here, student belonging in math class includes things like feeling like a valued class member and feeling comfortable sharing ideas.",
+  "Attitudes" = "Student attitudes about mathematics can shape motivation, engagement and persistence and in turn influence learning and achievement. In this survey, attitudes reflect how much students enjoy and value math, find it relevant beyond the classroom, and see themselves as capable math learners.",
+  "Belonging" = "A sense of belonging is closely tied to students' willingness to engage and take intellectual risks in math. In this survey, belonging reflects whether students feel like a valued class member and are comfortable sharing ideas.",
   "Classroom Culture" = "The classroom culture sets the foundation for how students view and engage with mathematics as a discipline. Here, classroom culture includes things like valuing students' mathematical ideas, elevating multiple solution paths, and learning from mistakes."
 )
 
@@ -280,8 +263,8 @@ cat(paste0(
 '#grid(\n',
 '  columns: (1fr, auto),\n',
 '  align: (left + horizon, right + horizon),\n',
-'  text(size: 8pt, fill: rgb("', brand$muted,
-       '"))[Source: Spring 2026 student math perceptions survey (grades 4–5).  Prepared ',
+'  text(size: 12pt, fill: rgb("', brand$muted,
+       '"))[Source: Spring 2026 Student Math Survey (Grades 4 & 5).  Prepared ',
        format(Sys.Date(), "%B %Y"), '.],\n',
 '  ', emit_logo(logo_footer, height = logo_footer_height), ',\n',
 ')\n',
