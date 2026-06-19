@@ -122,7 +122,7 @@ pct_lookup <- setNames(construct_pct$pct, as.character(construct_pct$construct))
 plot_pie <- function(construct_name, pct, fill_col) {
   hsize <- 4  # larger -> bigger hole / thinner ring
   base <- theme_void(base_size = 11) +
-    theme(plot.title  = element_text(face = "bold", size = 12,
+    theme(plot.title  = element_text(face = "bold", size = 14,
                                      colour = brand$ink, hjust = 0.5,
                                      margin = margin(t = 3)),
           plot.margin = margin(2, 8, 2, 8))
@@ -209,7 +209,7 @@ desc_cell <- function(name) {
   paste0(
     '[\n',
     '  #text(weight: "bold", size: 14pt, fill: rgb("', col, '"))[', name, ']\n',
-    '  #v(3pt)\n',
+    '  #v(1pt)\n',
     '  #line(length: 100%, stroke: 1.5pt + rgb("', col, '"))\n',
     '  #v(5pt)\n',
     '  #text(size: 10pt, fill: rgb("', brand$ink, '"))[', descriptions[[name]], ']\n',
